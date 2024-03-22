@@ -1,5 +1,5 @@
-import { CreateInsuranceDto } from './create-insurance.dto';
-
-export class UpdateInsuranceDto extends CreateInsuranceDto {
-  id: number;
+export class UpdateInsuranceDto {
+  name: string;
+  logo: string;
+  rating: number;
 }

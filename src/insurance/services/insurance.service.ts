@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Insurance } from '../entities/insurance.entity';
-import { Repository } from 'typeorm';
+import { MoreThanOrEqual, Repository } from 'typeorm';
 import { CreateInsuranceDto } from '../dto/create-insurance.dto';
 import { UpdateInsuranceDto } from '../dto/update-insurance.dto';
 
@@ -12,25 +12,29 @@ export class InsuranceService {
     private readonly _repository: Repository<Insurance>,
   ) {}
 
+  async findMostPopular() {
+    return await this._repository.find({
+      where: { rating: MoreThanOrEqual(4), status: true },
+      take: 6,
+      select: { name: true, logo: true },
+    });
+  }
+
   async findAll() {
-    return await this._repository.find();
+    return await this._repository.find({ where: { status: true } });
   }
 
   async create(insuranceDto: CreateInsuranceDto) {
     const newInsurance = new Insurance();
     newInsurance.name = insuranceDto.name;
-    newInsurance.logo = insuranceDto.logo;
     return await this._repository.save(newInsurance);
   }
 
-  async update(insuranceDto: UpdateInsuranceDto) {
-    const foundInsurance = await this._repository.findOne({
-      where: { id: insuranceDto.id },
-    });
+  async update(id: number, insuranceDto: UpdateInsuranceDto) {
+    const foundInsurance = await this._repository.findOne({ where: { id } });
     if (!foundInsurance) return;
-    foundInsurance.name = insuranceDto.name;
-    foundInsurance.logo = insuranceDto.logo;
-    return await this._repository.save(foundInsurance);
+    const newObject = Object.assign(foundInsurance, insuranceDto);
+    return await this._repository.save(newObject);
   }
 
   async delete(id: number) {
