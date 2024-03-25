@@ -9,6 +9,7 @@ import {
   ParseIntPipe,
   Post,
   Put,
+  Query,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -20,6 +21,8 @@ import {
   ApiExtraModels,
   ApiOperation,
   ApiParam,
+  ApiProperty,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -31,9 +34,10 @@ export class InsuranceController {
   constructor(private readonly _insuranceService: InsuranceService) {}
 
   @Get()
+  @ApiQuery({ name: 'searchterm' })
   @ApiResponse({ status: HttpStatus.OK, description: 'get all insurances' })
-  async findAll() {
-    return await this._insuranceService.findAll();
+  async findAll(@Query('searchTerm') searchTerm: string) {
+    return await this._insuranceService.findAll(searchTerm);
   }
 
   @Get('most-popular')
@@ -66,6 +70,23 @@ export class InsuranceController {
     @Body() insuranceDto: UpdateInsuranceDto,
   ) {
     return await this._insuranceService.update(id, insuranceDto);
+  }
+
+  @Put('increase-rating')
+  @ApiParam({ name: 'id', required: true, description: 'insurance id' })
+  @ApiBody({
+    type: 'number',
+    required: true,
+    description: 'new insurance rating',
+  })
+  @ApiProperty({ name: 'rating', type: 'number' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Success' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Bad Request' })
+  async updateRating(
+    @Param('id', new ParseIntPipe()) id: number,
+    @Body('rating', new ParseIntPipe()) rating: number,
+  ) {
+    return this._insuranceService.updateRating(id, rating);
   }
 
   @Delete(':id')

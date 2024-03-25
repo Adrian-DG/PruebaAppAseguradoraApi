@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Param, ParseIntPipe } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Insurance } from '../entities/insurance.entity';
-import { MoreThanOrEqual, Repository } from 'typeorm';
+import { Like, MoreThanOrEqual, Repository } from 'typeorm';
 import { CreateInsuranceDto } from '../dto/create-insurance.dto';
 import { UpdateInsuranceDto } from '../dto/update-insurance.dto';
+import { Contains } from 'class-validator';
 
 @Injectable()
 export class InsuranceService {
@@ -20,14 +21,17 @@ export class InsuranceService {
     });
   }
 
-  async findAll() {
-    return await this._repository.find({ where: { status: true } });
+  async findAll(searchTerm: string) {
+    return await this._repository.find({
+      where: { name: Like(`%${searchTerm}%`), status: true },
+      select: { id: true, name: true, logo: true },
+    });
   }
 
   async create(insuranceDto: CreateInsuranceDto) {
     const newInsurance = new Insurance();
-    newInsurance.name = insuranceDto.name;
-    return await this._repository.save(newInsurance);
+    const newObject = Object.assign(newInsurance, insuranceDto);
+    return await this._repository.save(newObject);
   }
 
   async update(id: number, insuranceDto: UpdateInsuranceDto) {
@@ -35,6 +39,13 @@ export class InsuranceService {
     if (!foundInsurance) return;
     const newObject = Object.assign(foundInsurance, insuranceDto);
     return await this._repository.save(newObject);
+  }
+
+  async updateRating(id: number, rating: number) {
+    const foundInsurance = await this._repository.findOne({ where: { id } });
+    if (!foundInsurance) return;
+    Object.assign(foundInsurance, { rating: rating });
+    return await this._repository.save(foundInsurance);
   }
 
   async delete(id: number) {
